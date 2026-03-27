@@ -12,6 +12,22 @@
 </head>
 <body>
 
+    <!-- Global Video Background -->
+    <div class="video-bg-container">
+        <video autoplay loop muted playsinline id="bgVideo">
+            <source src="background.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var bgVideo = document.getElementById('bgVideo');
+            if (bgVideo) {
+                bgVideo.play().catch(function(e){ console.log("Video play error:", e); });
+            }
+        });
+    </script>
     <!-- Auth Background & Overlay -->
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-background">
@@ -27,34 +43,56 @@
                 <h2>A/L Portal</h2>
             </div>
             
-            <h3 id="authTitle" class="auth-subtitle">ඇතුල් වන්න (Login)</h3>
-            <p id="authDesc" class="auth-desc">කරුණාකර ඔබගේ විස්තර ලබා දෙන්න.</p>
+            <h3 id="authTitle" class="auth-subtitle">Welcome Back</h3>
+            <p id="authDesc" class="auth-desc">Please enter your details to login.</p>
             
             <!-- Step 1: Login -->
             <form id="loginForm" class="auth-form">
                 <div class="input-group">
-                    <label for="username"><i class='bx bx-user'></i> පරිශීලක නාමය (Username)</label>
-                    <input type="text" id="username" placeholder="ඔබගේ නම..." required>
+                    <label for="username"><i class='bx bx-user'></i> Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" required>
                 </div>
-                <div class="input-group">
-                    <label for="password"><i class='bx bx-lock-alt'></i> මුරපදය (Password)</label>
-                    <input type="password" id="password" placeholder="මුරපදය..." required>
+                <div class="input-group" style="margin-top: 0.5rem">
+                    <label for="password"><i class='bx bx-lock-alt'></i> Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
                 </div>
-                <button type="submit" class="submit-btn primary-btn">
-                    ඉදිරියට (Next) <i class='bx bx-right-arrow-alt'></i>
+                <button type="submit" class="submit-btn primary-btn" style="margin-top: 1rem">
+                    Login <i class='bx bx-right-arrow-alt'></i>
                 </button>
+                <p class="auth-switch">Don't have an account? <span id="showRegisterBtn">Register here</span></p>
+            </form>
+
+            <!-- Step 1.5: Register -->
+            <form id="registerForm" class="auth-form hidden">
+                <div class="input-group">
+                    <label for="regUsername"><i class='bx bx-user'></i> Username</label>
+                    <input type="text" id="regUsername" placeholder="Choose a username" required>
+                </div>
+                <div class="input-group" style="margin-top: 0.5rem">
+                    <label for="regPhone"><i class='bx bx-phone'></i> Phone Number</label>
+                    <input type="tel" id="regPhone" placeholder="07XXXXXXXX" pattern="[0-9]{10}" required>
+                </div>
+                <div class="input-group" style="margin-top: 0.5rem">
+                    <label for="regPassword"><i class='bx bx-lock-alt'></i> Password</label>
+                    <input type="password" id="regPassword" placeholder="Create a password" required>
+                </div>
+                <button type="submit" class="submit-btn primary-btn" style="margin-top: 1rem">
+                    Register <i class='bx bx-user-plus'></i>
+                </button>
+                <p class="auth-switch">Already have an account? <span id="showLoginBtn">Login here</span></p>
             </form>
 
             <!-- Step 2: Phone Verification -->
             <form id="verifyForm" class="auth-form hidden">
                 <div class="input-group">
-                    <label for="phone"><i class='bx bx-phone'></i> දුරකථන අංකය (Phone Number)</label>
+                    <label for="phone"><i class='bx bx-phone'></i> Phone Number</label>
                     <input type="tel" id="phone" placeholder="07XXXXXXXX" pattern="[0-9]{10}" required>
-                    <small style="color:var(--text-secondary); font-size:0.8rem; margin-top:0.3rem">ඉලක්කම් 10කින් යුත් නිවැරදි අංකය ලබාදෙන්න.</small>
+                    <small style="color:var(--text-secondary); font-size:0.8rem; margin-top:0.3rem">Enter your registered 10-digit number to verify your account.</small>
                 </div>
-                <button type="submit" class="submit-btn success-btn">
-                    තහවුරු කරන්න (Verify) <i class='bx bx-check-circle'></i>
+                <button type="submit" class="submit-btn success-btn" style="margin-top: 1rem">
+                    Verify & Login <i class='bx bx-check-circle'></i>
                 </button>
+                <p class="auth-switch" style="margin-top: 1.5rem"><span id="backToLoginBtn"><i class='bx bx-arrow-back'></i> Back to Login</span></p>
             </form>
         </div>
     </div>

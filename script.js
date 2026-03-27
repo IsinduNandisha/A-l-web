@@ -1,16 +1,25 @@
 // State
 let videos = JSON.parse(localStorage.getItem('al_portal_videos')) || [];
+let appUsers = JSON.parse(localStorage.getItem('al_users')) || [];
 let currentSubject = 'all';
 let isLoggedIn = localStorage.getItem('al_portal_auth') === 'true';
 let currentTheme = localStorage.getItem('al_portal_theme') || 'dark';
+let tempLoginUser = null; // Used during the 2-step verification
 
 // DOM Elements
 const authOverlay = document.getElementById('authOverlay');
 const appContainer = document.getElementById('appContainer');
+
+// Forms & Auth
 const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
 const verifyForm = document.getElementById('verifyForm');
 const authTitle = document.getElementById('authTitle');
 const authDesc = document.getElementById('authDesc');
+
+const showRegisterBtn = document.getElementById('showRegisterBtn');
+const showLoginBtn = document.getElementById('showLoginBtn');
+const backToLoginBtn = document.getElementById('backToLoginBtn');
 
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const logoutBtn = document.getElementById('logoutBtn');
@@ -26,7 +35,7 @@ const openModalBtn = document.getElementById('openModalBtn');
 const closeAddModalBtn = document.getElementById('closeModalBtn');
 const closePlayerBtn = document.getElementById('closePlayerBtn');
 
-// Form
+// Add Video Form Inputs
 const addVideoForm = document.getElementById('addVideoForm');
 const videoSubject = document.getElementById('videoSubject');
 const videoTitle = document.getElementById('videoTitle');
@@ -77,34 +86,85 @@ function checkAuth() {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    // ---- Auth Listeners ----
+    // ---- Auth View Toggles ----
+    function showLoginForm() {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        verifyForm.classList.add('hidden');
+        authTitle.textContent = 'Welcome Back';
+        authDesc.textContent = 'Please enter your details to login.';
+    }
+
+    function showRegisterForm() {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        verifyForm.classList.add('hidden');
+        authTitle.textContent = 'Create Account';
+        authDesc.textContent = 'Sign up to access the study portal.';
+    }
+
+    function showVerifyForm() {
+        loginForm.classList.add('hidden');
+        registerForm.classList.add('hidden');
+        verifyForm.classList.remove('hidden');
+        authTitle.textContent = 'Verify Account';
+        authDesc.textContent = 'Please verify your phone number to continue.';
+    }
+
+    showRegisterBtn.addEventListener('click', showRegisterForm);
+    showLoginBtn.addEventListener('click', showLoginForm);
+    backToLoginBtn.addEventListener('click', showLoginForm);
+
+    // ---- Register Submit ----
+    registerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const user = document.getElementById('regUsername').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+        const pass = document.getElementById('regPassword').value.trim();
+
+        if (appUsers.find(u => u.username === user)) {
+            showToast('Username already exists!', 'error');
+            return;
+        }
+
+        appUsers.push({ username: user, phone: phone, password: pass });
+        localStorage.setItem('al_users', JSON.stringify(appUsers));
+        
+        showToast('Registration successful! You can now login.');
+        registerForm.reset();
+        showLoginForm();
+    });
+
+    // ---- Login Submit ----
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const user = document.getElementById('username').value.trim();
         const pass = document.getElementById('password').value.trim();
 
-        if (user && pass) {
-            loginForm.classList.add('hidden');
-            verifyForm.classList.remove('hidden');
-            authTitle.textContent = 'ගිණුම තහවුරු කරන්න';
-            authDesc.textContent = 'ඔබගේ දුරකථන අංකය ලබා දී ගිණුම තහවුරු (Verify) කරන්න.';
+        const foundUser = appUsers.find(u => u.username === user && u.password === pass);
+
+        if (foundUser) {
+            tempLoginUser = foundUser;
+            showVerifyForm();
+        } else {
+            showToast('Invalid username or password.', 'error');
         }
     });
 
+    // ---- Verify Submit ----
     verifyForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const phone = document.getElementById('phone').value.trim();
 
-        // Simple 10-digit validation
-        if (phone.length === 10 && /^\d+$/.test(phone)) {
+        if (tempLoginUser && tempLoginUser.phone === phone) {
             localStorage.setItem('al_portal_auth', 'true');
             isLoggedIn = true;
-
-            showToast('සාර්ථකව තහවුරු කෙරිණි (Verified successfully!)');
+            
+            showToast('Verified & Logged in successfully!');
             checkAuth();
             renderVideos();
         } else {
-            showToast('කරුණාකර නිවැරදි දුරකථන අංකයක් ඇතුළත් කරන්න', 'error');
+            showToast('Incorrect phone number for this account.', 'error');
         }
     });
 
@@ -114,25 +174,24 @@ function setupEventListeners() {
         document.documentElement.setAttribute('data-theme', currentTheme);
         localStorage.setItem('al_portal_theme', currentTheme);
         updateThemeIcon();
-        showToast(currentTheme === 'light' ? 'Light Theme සක්‍රියයි' : 'Dark Theme සක්‍රියයි');
+        showToast(currentTheme === 'light' ? 'Light Theme Activated' : 'Dark Theme Activated');
     });
 
     // ---- Logout ----
     logoutBtn.addEventListener('click', () => {
-        if (confirm('ඔබට ගිණුමෙන් ඉවත් වීමට අවශ්‍යද? (Are you sure you want to logout?)')) {
+        if (confirm('Are you sure you want to logout?')) {
             localStorage.removeItem('al_portal_auth');
             isLoggedIn = false;
-
+            tempLoginUser = null;
+            
             // Reset forms
             loginForm.reset();
             verifyForm.reset();
-            verifyForm.classList.add('hidden');
-            loginForm.classList.remove('hidden');
-            authTitle.textContent = 'ඇතුල් වන්න (Login)';
-            authDesc.textContent = 'කරුණාකර ඔබගේ විස්තර ලබා දෙන්න.';
-
+            registerForm.reset();
+            
+            showLoginForm();
             checkAuth();
-            showToast('සාර්ථකව ඉවත් විය (Logged out)');
+            showToast('Logged out successfully');
         }
     });
 
@@ -142,10 +201,10 @@ function setupEventListeners() {
             navLinks.forEach(l => l.classList.remove('active'));
             link.classList.add('active');
             currentSubject = link.dataset.subject;
-
+            
             const info = subjectsInfo[currentSubject];
             pageTitle.innerHTML = `${info.name} <span class="badge">${info.badge}</span>`;
-
+            
             renderVideos();
         });
     });
@@ -193,7 +252,7 @@ function setupEventListeners() {
         const videoId = extractYouTubeID(url);
 
         if (!videoId) {
-            showToast('කරුණාකර නිවැරදි YouTube ලින්ක් එකක් ලබා දෙන්න', 'error');
+            showToast('Please enter a valid YouTube link', 'error');
             return;
         }
 
@@ -211,7 +270,7 @@ function setupEventListeners() {
 
         addModal.classList.remove('active');
         addVideoForm.reset();
-        showToast('වීඩියෝව සාර්ථකව එක් කරන ලදී (Video added!)');
+        showToast('Video successfully added!');
     });
 }
 
@@ -249,8 +308,8 @@ function renderVideos() {
         videoGrid.innerHTML = `
             <div class="empty-state">
                 <i class='bx bx-video-off'></i>
-                <p>මෙම විෂයට අදාළ වීඩියෝ කිසිවක් මෙතෙක් එක් කර නොමැත.</p>
-                <p style="font-size:0.9rem; margin-top:0.5rem; opacity:0.7">නව වීඩියෝවක් එක් කිරීමට ඉහළ ඇති බොත්තම භාවිත කරන්න.</p>
+                <p>No videos have been added for this subject yet.</p>
+                <p style="font-size:0.9rem; margin-top:0.5rem; opacity:0.7">Use the button above to add a new video.</p>
             </div>
         `;
         return;
@@ -276,7 +335,7 @@ function renderVideos() {
                 <span class="subject-badge ${subjectClass}">${subjectName}</span>
                 <h3 class="video-title" onclick="playVideo('${video.id}')">${video.title}</h3>
                 <div class="card-actions">
-                    <button class="delete-btn" onclick="deleteVideo('${video.id}', event)" title="ඉවත් කරන්න (Delete)">
+                    <button class="delete-btn" onclick="deleteVideo('${video.id}', event)" title="Delete Video">
                         <i class='bx bx-trash'></i>
                     </button>
                 </div>
@@ -301,11 +360,11 @@ window.playVideo = function (id) {
 window.deleteVideo = function (id, event) {
     if (event) event.stopPropagation();
 
-    if (confirm('මෙම වීඩියෝව ඉවත් කිරීමට අවශ්‍ය බව ඔබට සහතිකද? (Delete video?)')) {
+    if (confirm('Are you sure you want to delete this video?')) {
         videos = videos.filter(v => v.id !== id);
         saveVideos();
         renderVideos();
-        showToast('වීඩියෝව ඉවත් කරන ලදී (Deleted)', 'error');
+        showToast('Video deleted', 'error');
     }
 };
 
