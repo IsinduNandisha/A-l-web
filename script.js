@@ -14,12 +14,15 @@ const appContainer = document.getElementById('appContainer');
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const verifyForm = document.getElementById('verifyForm');
+const forgotForm = document.getElementById('forgotForm');
 const authTitle = document.getElementById('authTitle');
 const authDesc = document.getElementById('authDesc');
 
 const showRegisterBtn = document.getElementById('showRegisterBtn');
 const showLoginBtn = document.getElementById('showLoginBtn');
 const backToLoginBtn = document.getElementById('backToLoginBtn');
+const showForgotBtn = document.getElementById('showForgotBtn');
+const backToLoginFromForgotBtn = document.getElementById('backToLoginFromForgotBtn');
 
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const logoutBtn = document.getElementById('logoutBtn');
@@ -91,6 +94,7 @@ function setupEventListeners() {
         loginForm.classList.remove('hidden');
         registerForm.classList.add('hidden');
         verifyForm.classList.add('hidden');
+        forgotForm.classList.add('hidden');
         authTitle.textContent = 'Welcome Back';
         authDesc.textContent = 'Please enter your details to login.';
     }
@@ -99,6 +103,7 @@ function setupEventListeners() {
         loginForm.classList.add('hidden');
         registerForm.classList.remove('hidden');
         verifyForm.classList.add('hidden');
+        forgotForm.classList.add('hidden');
         authTitle.textContent = 'Create Account';
         authDesc.textContent = 'Sign up to access the study portal.';
     }
@@ -107,13 +112,25 @@ function setupEventListeners() {
         loginForm.classList.add('hidden');
         registerForm.classList.add('hidden');
         verifyForm.classList.remove('hidden');
+        forgotForm.classList.add('hidden');
         authTitle.textContent = 'Verify Account';
         authDesc.textContent = 'Please verify your phone number to continue.';
+    }
+
+    function showForgotForm() {
+        loginForm.classList.add('hidden');
+        registerForm.classList.add('hidden');
+        verifyForm.classList.add('hidden');
+        forgotForm.classList.remove('hidden');
+        authTitle.textContent = 'Reset Password';
+        authDesc.textContent = 'Enter your details to create a new password.';
     }
 
     showRegisterBtn.addEventListener('click', showRegisterForm);
     showLoginBtn.addEventListener('click', showLoginForm);
     backToLoginBtn.addEventListener('click', showLoginForm);
+    showForgotBtn.addEventListener('click', showForgotForm);
+    backToLoginFromForgotBtn.addEventListener('click', showLoginForm);
 
     // ---- Register Submit ----
     registerForm.addEventListener('submit', (e) => {
@@ -165,6 +182,27 @@ function setupEventListeners() {
             renderVideos();
         } else {
             showToast('Incorrect phone number for this account.', 'error');
+        }
+    });
+
+    // ---- Forgot Password Submit ----
+    forgotForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const user = document.getElementById('forgotUsername').value.trim();
+        const phone = document.getElementById('forgotPhone').value.trim();
+        const newPass = document.getElementById('forgotNewPassword').value.trim();
+
+        const userIndex = appUsers.findIndex(u => u.username === user && u.phone === phone);
+
+        if (userIndex !== -1) {
+            appUsers[userIndex].password = newPass;
+            localStorage.setItem('al_users', JSON.stringify(appUsers));
+            
+            showToast('Password reset successfully! Please login.');
+            forgotForm.reset();
+            showLoginForm();
+        } else {
+            showToast('No matching details found.', 'error');
         }
     });
 
